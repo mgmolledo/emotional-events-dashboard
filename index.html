@@ -121,6 +121,16 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
 /* ══ FOOTER ══ */
 .footer{text-align:center;padding-top:20px;margin-top:16px;border-top:1px solid #222;font-size:9px;color:#666}
 
+/* ══ VALIDATION ══ */
+.fld input.err{border-color:#ef4444;background:#ef444411}
+.vwarn{
+  display:none;padding:8px 12px;border-radius:6px;margin-bottom:12px;
+  font-size:10px;color:#ffcc00;background:#ffcc0011;border:1px solid #ffcc0033;
+  grid-template-columns:auto 1fr;gap:8px;align-items:start;
+}
+.vwarn.on{display:grid}
+.vwarn .vi{font-size:12px;line-height:1}
+
 /* ══ DESKTOP ══ */
 @media(min-width:640px){
   .header{padding:20px 28px}
@@ -158,6 +168,7 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
   <input class="ename" id="evName" value="Artista X — Madrid">
 
   <div class="panel on" id="p0">
+    <div class="vwarn" id="warn0"><div class="vi">&#9888;</div><div id="warn0msg"></div></div>
     <div class="sec">
       <div class="slbl g">Estructura de costes</div>
       <div class="igrid" id="costInputs"></div>
@@ -196,6 +207,7 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
   </div>
 
   <div class="panel" id="p2">
+    <div class="vwarn" id="warn2"><div class="vi">&#9888;</div><div id="warn2msg"></div></div>
     <div class="sec">
       <div class="slbl p">Estructura de pagos del caché</div>
       <div class="fxr" id="tresInputs"></div>
@@ -335,7 +347,68 @@ function hStat(label,value,color,sub){
   return '<div class="st"><div class="sl">'+label+'</div><div class="sv" style="color:'+(color||'#e0e0e0')+'">'+value+'</div>'+(sub?'<div class="ss">'+sub+'</div>':'')+'</div>';
 }
 
+function validate(){
+  var w=[],errs=[];
+  // Clear all error states
+  document.querySelectorAll('.fld input').forEach(function(i){i.classList.remove('err')});
+
+  // Aforo > 0
+  if(S.aforo<=0){S.aforo=1;document.getElementById('f_aforo').value=1;mark('aforo');w.push('Aforo debe ser mayor que 0')}
+  // Precio > 0
+  if(S.precioMedio<=0){S.precioMedio=1;document.getElementById('f_precioMedio').value=1;mark('precioMedio');w.push('Precio medio debe ser mayor que 0')}
+  // IVA 0-100
+  if(S.iva<0){S.iva=0;document.getElementById('f_iva').value=0;mark('iva');w.push('IVA no puede ser negativo')}
+  if(S.iva>100){S.iva=100;document.getElementById('f_iva').value=100;mark('iva');w.push('IVA no puede superar 100%')}
+  // Comision 0-100
+  if(S.comision<0){S.comision=0;document.getElementById('f_comision').value=0;mark('comision');w.push('Comisi\u00f3n no puede ser negativa')}
+  if(S.comision>100){S.comision=100;document.getElementById('f_comision').value=100;mark('comision');w.push('Comisi\u00f3n no puede superar 100%')}
+  // Escenarios: 0-100 y orden
+  if(S.ocupPes<0){S.ocupPes=0;document.getElementById('f_ocupPes').value=0;mark('ocupPes')}
+  if(S.ocupBase<0){S.ocupBase=0;document.getElementById('f_ocupBase').value=0;mark('ocupBase')}
+  if(S.ocupOpt<0){S.ocupOpt=0;document.getElementById('f_ocupOpt').value=0;mark('ocupOpt')}
+  if(S.ocupPes>100){S.ocupPes=100;document.getElementById('f_ocupPes').value=100;mark('ocupPes')}
+  if(S.ocupBase>100){S.ocupBase=100;document.getElementById('f_ocupBase').value=100;mark('ocupBase')}
+  if(S.ocupOpt>100){S.ocupOpt=100;document.getElementById('f_ocupOpt').value=100;mark('ocupOpt')}
+  if(S.ocupPes>=S.ocupBase){mark('ocupPes');mark('ocupBase');w.push('Pesimista debe ser menor que Base')}
+  if(S.ocupBase>=S.ocupOpt){mark('ocupBase');mark('ocupOpt');w.push('Base debe ser menor que Optimista')}
+  // Pagos caché: suma <= 100
+  var sumPagos=S.cachePago1+S.cachePago2+S.cachePago3;
+  if(sumPagos>100){
+    var excess=sumPagos-100;
+    S.cachePago3=Math.max(0,S.cachePago3-excess);
+    document.getElementById('f_cachePago3').value=S.cachePago3;
+    mark('cachePago1');mark('cachePago2');mark('cachePago3');
+    w.push('Pagos del cach\u00e9 ajustados: la suma no puede superar 100% (era '+sumPagos+'%)')
+  }
+  if(S.cachePago1<0){S.cachePago1=0;document.getElementById('f_cachePago1').value=0;mark('cachePago1')}
+  if(S.cachePago2<0){S.cachePago2=0;document.getElementById('f_cachePago2').value=0;mark('cachePago2')}
+  if(S.cachePago3<0){S.cachePago3=0;document.getElementById('f_cachePago3').value=0;mark('cachePago3')}
+  // Semanas >= 1
+  if(S.semanasAntes<1){S.semanasAntes=1;document.getElementById('f_semanasAntes').value=1;mark('semanasAntes');w.push('Semanas de venta: m\u00ednimo 1')}
+  // Liquidacion >= 1
+  if(S.liquidacionDias<1){S.liquidacionDias=1;document.getElementById('f_liquidacionDias').value=1;mark('liquidacionDias')}
+  // Costes negativos
+  ['cache','produccion','venue','seguridad','sgae','marketing','seguros','otros'].forEach(function(k){
+    if(S[k]<0){S[k]=0;document.getElementById('f_'+k).value=0;mark(k);w.push('Los costes no pueden ser negativos')}
+  });
+
+  // Show/hide warnings
+  var w0=document.getElementById('warn0'),w0m=document.getElementById('warn0msg');
+  var w2=document.getElementById('warn2'),w2m=document.getElementById('warn2msg');
+  var pnlWarns=w.filter(function(m){return m.indexOf('cach\u00e9 ajustados')<0&&m.indexOf('Semanas')<0&&m.indexOf('Liquidaci')<0});
+  var tresWarns=w.filter(function(m){return m.indexOf('cach\u00e9 ajustados')>=0||m.indexOf('Semanas')>=0||m.indexOf('Liquidaci')>=0});
+  if(pnlWarns.length){w0.classList.add('on');w0m.textContent=pnlWarns.join(' | ')}else{w0.classList.remove('on')}
+  if(tresWarns.length){w2.classList.add('on');w2m.textContent=tresWarns.join(' | ')}else{w2.classList.remove('on')}
+  return w;
+}
+
+function mark(key){
+  var el=document.getElementById('f_'+key);
+  if(el)el.classList.add('err');
+}
+
 function recalc(){
+  validate();
   var ev=S;
   var tc=ev.cache+ev.produccion+ev.venue+ev.seguridad+ev.sgae+ev.marketing+ev.seguros+ev.otros;
   var tn=ev.precioMedio*(1-ev.iva/100)*(1-ev.comision/100);
