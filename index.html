@@ -16,8 +16,7 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
-input[type=number]{-moz-appearance:textfield;-webkit-appearance:none;appearance:none}
-input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=text]{-webkit-appearance:none;appearance:none}
 
 /* ══ HEADER ══ */
 .header{
@@ -123,6 +122,7 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
 
 /* ══ VALIDATION ══ */
 .fld input.err{border-color:#ef4444;background:#ef444411}
+.fld input.locked{opacity:.35;cursor:not-allowed;border-color:#333}
 .vwarn{
   display:none;padding:8px 12px;border-radius:6px;margin-bottom:12px;
   font-size:10px;color:#ffcc00;background:#ffcc0011;border:1px solid #ffcc0033;
@@ -130,6 +130,15 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
 }
 .vwarn.on{display:grid}
 .vwarn .vi{font-size:12px;line-height:1}
+.cache-remain{font-size:9px;margin-top:6px;font-weight:600}
+.btn-reset{
+  display:inline-block;padding:8px 16px;margin-bottom:16px;
+  background:none;border:1px solid #333;border-radius:6px;
+  color:#888;font-size:10px;font-family:inherit;cursor:pointer;
+  text-transform:uppercase;letter-spacing:1px;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-reset:active{background:#222;color:#e0e0e0}
 
 /* ══ DESKTOP ══ */
 @media(min-width:640px){
@@ -166,6 +175,7 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
 
 <div class="wrap">
   <input class="ename" id="evName" value="Artista X — Madrid">
+  <button class="btn-reset" onclick="resetAll()">Reset valores</button>
 
   <div class="panel on" id="p0">
     <div class="vwarn" id="warn0"><div class="vi">&#9888;</div><div id="warn0msg"></div></div>
@@ -211,6 +221,7 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
     <div class="sec">
       <div class="slbl p">Estructura de pagos del caché</div>
       <div class="fxr" id="tresInputs"></div>
+      <div class="cache-remain" id="cacheRemain"></div>
     </div>
     <div class="srow" id="tresStats"></div>
     <div class="sec">
@@ -244,11 +255,18 @@ var S={
   cachePago1:40,cachePago2:40,cachePago3:20,semanasAntes:8,liquidacionDias:21
 };
 
+var DEFAULTS={};
+Object.keys(S).forEach(function(k){DEFAULTS[k]=S[k]});
+
 function mkField(key,label,unit){
   var d=document.createElement('div');
   d.className='fld';
-  d.innerHTML='<label>'+label+'</label><div class="iw"><input type="number" id="f_'+key+'" value="'+S[key]+'"><span class="u">'+unit+'</span></div>';
-  d.querySelector('input').addEventListener('input',function(e){S[key]=Number(e.target.value)||0;recalc()});
+  d.innerHTML='<label>'+label+'</label><div class="iw"><input type="text" inputmode="decimal" pattern="[0-9]*" id="f_'+key+'" value="'+S[key]+'"><span class="u">'+unit+'</span></div>';
+  d.querySelector('input').addEventListener('input',function(e){
+    var v=e.target.value.replace(/[^0-9.\-]/g,'');
+    if(v!==e.target.value)e.target.value=v;
+    S[key]=Number(v)||0;recalc();
+  });
   return d;
 }
 
@@ -347,59 +365,114 @@ function hStat(label,value,color,sub){
   return '<div class="st"><div class="sl">'+label+'</div><div class="sv" style="color:'+(color||'#e0e0e0')+'">'+value+'</div>'+(sub?'<div class="ss">'+sub+'</div>':'')+'</div>';
 }
 
+function resetAll(){
+  Object.keys(DEFAULTS).forEach(function(k){
+    S[k]=DEFAULTS[k];
+    var el=document.getElementById('f_'+k);
+    if(el){el.value=DEFAULTS[k];el.disabled=false;el.classList.remove('err','locked')}
+  });
+  document.getElementById('evName').value='Artista X \u2014 Madrid';
+  recalc();
+}
+
+function clamp(key,min,max){
+  if(S[key]<min){S[key]=min;document.getElementById('f_'+key).value=min;mark(key);return true}
+  if(S[key]>max){S[key]=max;document.getElementById('f_'+key).value=max;mark(key);return true}
+  return false;
+}
+
+function lockField(key){
+  var el=document.getElementById('f_'+key);
+  if(el){el.disabled=true;el.classList.add('locked')}
+}
+
+function unlockField(key){
+  var el=document.getElementById('f_'+key);
+  if(el){el.disabled=false;el.classList.remove('locked')}
+}
+
 function validate(){
-  var w=[],errs=[];
-  // Clear all error states
+  var w=[];
   document.querySelectorAll('.fld input').forEach(function(i){i.classList.remove('err')});
 
+  // Costes >= 0
+  var negFound=false;
+  ['cache','produccion','venue','seguridad','sgae','marketing','seguros','otros'].forEach(function(k){
+    if(S[k]<0){S[k]=0;document.getElementById('f_'+k).value=0;mark(k);negFound=true}
+  });
+  if(negFound)w.push('Costes corregidos: no pueden ser negativos');
+
   // Aforo > 0
-  if(S.aforo<=0){S.aforo=1;document.getElementById('f_aforo').value=1;mark('aforo');w.push('Aforo debe ser mayor que 0')}
+  if(S.aforo<=0){S.aforo=1;document.getElementById('f_aforo').value=1;mark('aforo');w.push('Aforo: m\u00ednimo 1')}
   // Precio > 0
-  if(S.precioMedio<=0){S.precioMedio=1;document.getElementById('f_precioMedio').value=1;mark('precioMedio');w.push('Precio medio debe ser mayor que 0')}
+  if(S.precioMedio<=0){S.precioMedio=1;document.getElementById('f_precioMedio').value=1;mark('precioMedio');w.push('Precio medio: m\u00ednimo 1')}
   // IVA 0-100
-  if(S.iva<0){S.iva=0;document.getElementById('f_iva').value=0;mark('iva');w.push('IVA no puede ser negativo')}
-  if(S.iva>100){S.iva=100;document.getElementById('f_iva').value=100;mark('iva');w.push('IVA no puede superar 100%')}
+  if(clamp('iva',0,100))w.push('IVA: rango 0-100%');
   // Comision 0-100
-  if(S.comision<0){S.comision=0;document.getElementById('f_comision').value=0;mark('comision');w.push('Comisi\u00f3n no puede ser negativa')}
-  if(S.comision>100){S.comision=100;document.getElementById('f_comision').value=100;mark('comision');w.push('Comisi\u00f3n no puede superar 100%')}
-  // Escenarios: 0-100 y orden
-  if(S.ocupPes<0){S.ocupPes=0;document.getElementById('f_ocupPes').value=0;mark('ocupPes')}
-  if(S.ocupBase<0){S.ocupBase=0;document.getElementById('f_ocupBase').value=0;mark('ocupBase')}
-  if(S.ocupOpt<0){S.ocupOpt=0;document.getElementById('f_ocupOpt').value=0;mark('ocupOpt')}
-  if(S.ocupPes>100){S.ocupPes=100;document.getElementById('f_ocupPes').value=100;mark('ocupPes')}
-  if(S.ocupBase>100){S.ocupBase=100;document.getElementById('f_ocupBase').value=100;mark('ocupBase')}
-  if(S.ocupOpt>100){S.ocupOpt=100;document.getElementById('f_ocupOpt').value=100;mark('ocupOpt')}
+  if(clamp('comision',0,100))w.push('Comisi\u00f3n: rango 0-100%');
+
+  // Escenarios 0-100 y orden
+  clamp('ocupPes',0,100);clamp('ocupBase',0,100);clamp('ocupOpt',0,100);
   if(S.ocupPes>=S.ocupBase){mark('ocupPes');mark('ocupBase');w.push('Pesimista debe ser menor que Base')}
   if(S.ocupBase>=S.ocupOpt){mark('ocupBase');mark('ocupOpt');w.push('Base debe ser menor que Optimista')}
-  // Pagos caché: suma <= 100
-  var sumPagos=S.cachePago1+S.cachePago2+S.cachePago3;
-  if(sumPagos>100){
-    var excess=sumPagos-100;
-    S.cachePago3=Math.max(0,S.cachePago3-excess);
-    document.getElementById('f_cachePago3').value=S.cachePago3;
-    mark('cachePago1');mark('cachePago2');mark('cachePago3');
-    w.push('Pagos del cach\u00e9 ajustados: la suma no puede superar 100% (era '+sumPagos+'%)')
-  }
-  if(S.cachePago1<0){S.cachePago1=0;document.getElementById('f_cachePago1').value=0;mark('cachePago1')}
-  if(S.cachePago2<0){S.cachePago2=0;document.getElementById('f_cachePago2').value=0;mark('cachePago2')}
-  if(S.cachePago3<0){S.cachePago3=0;document.getElementById('f_cachePago3').value=0;mark('cachePago3')}
-  // Semanas >= 1
-  if(S.semanasAntes<1){S.semanasAntes=1;document.getElementById('f_semanasAntes').value=1;mark('semanasAntes');w.push('Semanas de venta: m\u00ednimo 1')}
-  // Liquidacion >= 1
-  if(S.liquidacionDias<1){S.liquidacionDias=1;document.getElementById('f_liquidacionDias').value=1;mark('liquidacionDias')}
-  // Costes negativos
-  ['cache','produccion','venue','seguridad','sgae','marketing','seguros','otros'].forEach(function(k){
-    if(S[k]<0){S[k]=0;document.getElementById('f_'+k).value=0;mark(k);w.push('Los costes no pueden ser negativos')}
-  });
 
-  // Show/hide warnings
+  // Pagos caché: locking logic
+  var pagos=['cachePago1','cachePago2','cachePago3'];
+  pagos.forEach(function(k){if(S[k]<0){S[k]=0;document.getElementById('f_'+k).value=0}});
+  var sum=S.cachePago1+S.cachePago2+S.cachePago3;
+
+  // Unlock all first
+  pagos.forEach(function(k){unlockField(k)});
+
+  if(sum>100){
+    // Reduce last changed proportionally — simpler: cap each in order
+    var over=sum-100;
+    // Take from cachePago3 first, then 2, then 1
+    if(S.cachePago3>=over){S.cachePago3-=over}
+    else{over-=S.cachePago3;S.cachePago3=0;if(S.cachePago2>=over){S.cachePago2-=over}else{over-=S.cachePago2;S.cachePago2=0;S.cachePago1=Math.max(0,S.cachePago1-over)}}
+    document.getElementById('f_cachePago1').value=S.cachePago1;
+    document.getElementById('f_cachePago2').value=S.cachePago2;
+    document.getElementById('f_cachePago3').value=S.cachePago3;
+    w.push('Pagos del cach\u00e9 ajustados: suma limitada a 100%');
+    sum=S.cachePago1+S.cachePago2+S.cachePago3;
+  }
+
+  // If sum equals 100, lock fields that are 0 and show remaining = 0
+  if(sum>=100){
+    pagos.forEach(function(k){
+      if(S[k]===0)lockField(k);
+    });
+    // Cap: don't allow typing more in any field
+    pagos.forEach(function(k){
+      var el=document.getElementById('f_'+k);
+      el.max=S[k];
+    });
+  }else{
+    pagos.forEach(function(k){
+      var el=document.getElementById('f_'+k);
+      el.max=100-sum+S[k];
+    });
+  }
+
+  // Semanas >= 1
+  if(S.semanasAntes<1){S.semanasAntes=1;document.getElementById('f_semanasAntes').value=1;mark('semanasAntes')}
+  if(S.liquidacionDias<1){S.liquidacionDias=1;document.getElementById('f_liquidacionDias').value=1;mark('liquidacionDias')}
+
+  // Show warnings
   var w0=document.getElementById('warn0'),w0m=document.getElementById('warn0msg');
   var w2=document.getElementById('warn2'),w2m=document.getElementById('warn2msg');
-  var pnlWarns=w.filter(function(m){return m.indexOf('cach\u00e9 ajustados')<0&&m.indexOf('Semanas')<0&&m.indexOf('Liquidaci')<0});
-  var tresWarns=w.filter(function(m){return m.indexOf('cach\u00e9 ajustados')>=0||m.indexOf('Semanas')>=0||m.indexOf('Liquidaci')>=0});
-  if(pnlWarns.length){w0.classList.add('on');w0m.textContent=pnlWarns.join(' | ')}else{w0.classList.remove('on')}
-  if(tresWarns.length){w2.classList.add('on');w2m.textContent=tresWarns.join(' | ')}else{w2.classList.remove('on')}
-  return w;
+  var pnlW=w.filter(function(m){return m.indexOf('cach\u00e9')<0&&m.indexOf('Semanas')<0});
+  var trsW=w.filter(function(m){return m.indexOf('cach\u00e9')>=0||m.indexOf('Semanas')>=0});
+  if(pnlW.length){w0.classList.add('on');w0m.textContent=pnlW.join(' \u00b7 ')}else{w0.classList.remove('on')}
+  if(trsW.length){w2.classList.add('on');w2m.textContent=trsW.join(' \u00b7 ')}else{w2.classList.remove('on')}
+
+  // Update remaining % indicator
+  var remEl=document.getElementById('cacheRemain');
+  if(remEl){
+    var rem=100-S.cachePago1-S.cachePago2-S.cachePago3;
+    remEl.textContent=rem>0?rem+'% sin asignar':'100% asignado';
+    remEl.style.color=rem>0?'#D4A017':'#22c55e';
+  }
 }
 
 function mark(key){
