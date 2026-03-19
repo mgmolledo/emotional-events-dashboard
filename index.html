@@ -132,9 +132,9 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
 .vwarn .vi{font-size:12px;line-height:1}
 .cache-remain{font-size:9px;margin-top:6px;font-weight:600}
 .btn-reset{
-  display:inline-block;padding:8px 16px;margin-bottom:16px;
-  background:none;border:1px solid #333;border-radius:6px;
-  color:#888;font-size:10px;font-family:inherit;cursor:pointer;
+  display:inline-block;padding:5px 12px;
+  background:none;border:1px solid #333;border-radius:4px;
+  color:#888;font-size:9px;font-family:inherit;cursor:pointer;
   text-transform:uppercase;letter-spacing:1px;
   -webkit-tap-highlight-color:transparent;
 }
@@ -164,7 +164,10 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
     <div class="h-brand">Emotional Events</div>
     <div class="h-title">Financial Control Dashboard</div>
   </div>
-  <div class="h-right">Control financiero<br><span style="color:#444">mgmolledo</span></div>
+  <div style="display:grid;gap:6px;justify-items:end">
+    <div class="h-right">Control financiero<br><span style="color:#444">mgmolledo</span></div>
+    <button class="btn-reset" onclick="resetAll()">Reset</button>
+  </div>
 </div>
 
 <div class="tabs">
@@ -175,7 +178,6 @@ table.tt td{padding:5px 6px;text-align:right;white-space:nowrap}
 
 <div class="wrap">
   <input class="ename" id="evName" value="Artista X — Madrid">
-  <button class="btn-reset" onclick="resetAll()">Reset valores</button>
 
   <div class="panel on" id="p0">
     <div class="vwarn" id="warn0"><div class="vi">&#9888;</div><div id="warn0msg"></div></div>
