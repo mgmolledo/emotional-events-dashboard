@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>EE — Motor de Decisión</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#09090b;color:#e4e4e7;font-size:11px;overflow:hidden;height:100vh}
+:root{--g:#22c55e;--r:#ef4444;--a:#f59e0b;--b:#3b82f6;--p:#8b5cf6;--bg1:#09090b;--bg2:#18181b;--bg3:#27272a;--brd:#3f3f46;--t1:#fafafa;--t2:#a1a1aa;--t3:#71717a;--acc:#D4A017;--mono:'JetBrains Mono',monospace}
+.hdr{padding:6px 16px;border-bottom:1px solid var(--bg3);display:flex;justify-content:space-between;align-items:center;background:var(--bg2);height:32px}
+.hdr-l{display:flex;align-items:center;gap:12px}
+.hdr-brand{font-size:8px;color:var(--acc);letter-spacing:2px;text-transform:uppercase}
+.hdr-title{font-size:12px;font-weight:700}
+.btn-sm{padding:2px 8px;background:none;border:1px solid var(--brd);border-radius:3px;color:var(--t3);font-size:8px;font-family:inherit;cursor:pointer;text-transform:uppercase;letter-spacing:.5px}
+.btn-sm:hover{background:var(--bg3);color:var(--t1)}
+.tabs{display:flex;border-bottom:1px solid var(--bg3);background:var(--bg2);padding:0 16px}
+.tab{padding:7px 20px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;cursor:pointer;border:none;background:none;color:var(--t3);border-bottom:2px solid transparent;font-family:inherit}
+.tab:hover{color:var(--t2)}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc);background:#D4A01710}
+.panel{display:none;height:calc(100vh - 62px);overflow:hidden}.panel.on{display:block}
+.lay3{display:grid;grid-template-columns:280px 1fr 320px;gap:8px;padding:8px;height:100%}
+.col{display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.sec{background:var(--bg2);border-radius:6px;padding:8px;border:1px solid var(--bg3)}
+.sec-t{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);font-weight:600;margin-bottom:6px}
+.fld label{display:block;font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:1px}
+.fld input{width:100%;padding:3px 4px;background:var(--bg1);border:1px solid var(--brd);border-radius:3px;color:var(--t1);font-size:11px;font-family:var(--mono);outline:none}
+.fld input:focus{border-color:var(--acc);background:var(--bg2)}
+.fld .u{font-size:7px;color:var(--t3)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.st{padding:6px;background:var(--bg1);border-radius:4px;border:1px solid var(--bg3)}
+.st-l{font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px}
+.st-v{font-size:14px;font-weight:700;font-family:var(--mono)}
+.st-s{font-size:7px;color:var(--t3)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:600}
+.badge .dot{width:6px;height:6px;border-radius:50%}
+.pbar{display:flex;height:4px;border-radius:2px;overflow:hidden;margin:4px 0 2px}
+.plabels{display:flex}
+.plbl{flex:1;text-align:center;font-size:7px;color:var(--t3);padding:1px}
+.plbl.on{color:var(--t1);font-weight:600}
+.rec-box{padding:8px 10px;border-radius:4px;margin-bottom:4px}
+.rec-obj{font-size:11px;font-weight:700;margin-bottom:3px}
+.rec-txt{font-size:10px;line-height:1.5;color:var(--t1)}
+.rec-kpi{font-size:8px;color:var(--t3);margin-top:3px}
+.pal{padding:6px 8px;border-radius:4px;border:1px solid var(--bg3);margin-bottom:6px;background:var(--bg1)}
+.pal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pal-t{font-size:9px;font-weight:600}
+.pal-imp{font-size:9px;font-family:var(--mono)}
+.pal-v{font-size:9px;font-family:var(--mono);text-align:right;min-width:40px}
+.cve{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.cve-c{padding:6px;border-radius:4px;border:2px solid var(--bg3);text-align:center}
+.cve-c.best{border-color:var(--g)}
+.cve-l{font-size:7px;color:var(--t3);text-transform:uppercase}
+.cve-v{font-size:15px;font-weight:700;font-family:var(--mono)}
+.cve-rec{padding:4px;border-radius:3px;font-size:9px;font-weight:600;text-align:center;margin-bottom:4px}
+.chart-box svg{display:block;width:100%;height:auto}
+.warn{color:#ef4444;font-size:8px;padding:4px 6px;background:#ef444412;border-radius:3px;margin-bottom:4px}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;background:var(--bg3);border-radius:3px;outline:none;cursor:pointer;margin:4px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--acc);border:2px solid var(--bg1);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--acc);border:2px solid var(--bg1);cursor:pointer}
+input[type=range]::-moz-range-track{height:6px;background:var(--bg3);border-radius:3px}
+.price-check{font-size:8px;padding:4px 6px;border-radius:3px;margin-top:4px}
+.info{display:inline-block;width:12px;height:12px;line-height:12px;text-align:center;font-size:8px;color:var(--t3);border:1px solid var(--brd);border-radius:50%;cursor:pointer;margin-left:3px;vertical-align:middle;user-select:none}
+.info:hover{color:var(--t1);border-color:var(--t2)}
+.infopop{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#27272a;color:#e4e4e7;padding:8px 10px;border-radius:4px;font-size:9px;line-height:1.4;width:230px;z-index:9999;border:1px solid #3f3f46;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.infopop.on{display:block}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-l">
+    <span class="hdr-brand">Emotional Events</span>
+    <span class="hdr-title">Motor de Decisión</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span style="font-size:8px;color:var(--t3)">mgmolledo</span>
+    <button class="btn-sm" onclick="resetActive()">Reset</button>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab on" onclick="goTab(0)" id="tb0">Caso rápido</button>
+  <button class="tab" onclick="goTab(1)" id="tb1">Dashboard completo</button>
+</div>
+
+<!-- ══════ TAB 0: CASO RÁPIDO ══════ -->
+<div class="panel on" id="pan0">
+<div class="lay3">
+  <div class="col">
+    <div class="sec" style="border-color:#D4A01733;background:#D4A01708">
+      <div class="sec-t">Datos del caso</div>
+      <div class="fld" style="margin-bottom:4px"><label>Aforo</label><input type="number" id="qa" value="10000" step="500" min="0" onfocus="this.select()" oninput="calcQ('a')"></div>
+      <div class="fld" style="margin-bottom:4px"><label>Vendidas</label><input type="number" id="qv" value="3500" step="100" min="0" onfocus="this.select()" oninput="calcQ('v')"></div>
+      <div class="fld" style="margin-bottom:4px"><label>Días restantes</label><input type="number" id="qd" value="25" step="1" min="0" onfocus="this.select()" oninput="calcQ('d')"></div>
+      <div class="fld" style="margin-bottom:4px"><label>Días en venta</label><input type="number" id="qdv" value="65" step="5" min="1" onfocus="this.select()" oninput="calcQ('dv')"></div>
+      <div style="border-top:1px solid #333;margin:6px 0;padding-top:6px">
+        <div style="font-size:7px;color:var(--acc);margin-bottom:4px;letter-spacing:.5px">BE = COSTE / TICKET NETO — rellena 2 de 3</div>
+        <div class="fld" style="margin-bottom:4px"><label>Precio medio</label><input type="number" id="qp" value="45" step="5" min="1" onfocus="this.select()" oninput="calcQ('p')"><div class="u">€ → TN: <span id="qTN">37€</span></div></div>
+        <div class="fld" style="margin-bottom:4px"><label>Breakeven</label><input type="number" id="qb" value="7000" step="100" min="0" onfocus="this.select()" oninput="calcQ('b')"><div class="u"><span id="qBPct"></span></div></div>
+        <div class="fld"><label>Coste total</label><input type="number" id="qc" value="" step="5000" min="0" onfocus="this.select()" oninput="calcQ('c')"><div class="u">€ auto si vacío</div></div>
+      </div>
+      <div id="qPriceCheck"></div>
+      <div id="qWarn" style="min-height:8px;margin-top:4px"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="g4" id="qKpis"></div>
+    <div class="sec"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px" id="qBadges"></div><div class="pbar" id="qPbar"></div><div class="plabels" id="qPlbl"></div></div>
+    <div class="sec" style="flex:1;overflow-y:auto"><div class="sec-t">Curva de ventas</div><div class="chart-box" id="qChart"></div><div style="margin-top:6px" id="qRecBox"></div></div>
+  </div>
+  <div class="col">
+    <div class="sec"><div class="sec-t">Cancelar vs ejecutar</div><div class="g2" style="margin-bottom:4px"><div class="fld"><label>Penalización</label><input type="number" id="qPen" value="40000" step="5000" min="0" onfocus="this.select()" oninput="calcQ()"></div><div class="fld"><label>Hundidos</label><input type="number" id="qHun" value="25000" step="1000" min="0" onfocus="this.select()" oninput="calcQ()"></div></div><div class="cve" id="qCve"></div><div id="qCveR"></div></div>
+    <div class="sec">
+      <div class="sec-t" style="display:flex;justify-content:space-between;align-items:center">Palancas <div><button class="btn-sm" onclick="resetPalQ()" style="margin-right:4px">Reset</button><button class="btn-sm" style="background:#D4A01715;border-color:#D4A01744;color:var(--acc)" onclick="optimQ()">Optimizar</button></div></div>
+      <div class="pal" data-tip="Variación del gasto en marketing. +10% gasto ≈ +5% velocidad de venta. El coste extra se suma al total."><div class="pal-h"><div class="pal-t">Marketing</div><div class="pal-imp" style="color:var(--b)" id="qImpMkt"></div></div><input type="range" id="qSlMkt" min="-50" max="100" step="1" value="0" oninput="Q.mkt=+this.value;calcQ()"><div class="pal-v" id="qVMkt" style="text-align:center">0%</div></div>
+      <div class="pal" data-tip="Variación del precio medio. Afecta ingreso neto y punto muerto."><div class="pal-h"><div class="pal-t">Precio</div><div class="pal-imp" style="color:var(--a)" id="qImpPrc"></div></div><input type="range" id="qSlPrc" min="-30" max="30" step="1" value="0" oninput="Q.prc=+this.value;calcQ()"><div class="pal-v" id="qVPrc" style="text-align:center">0%</div></div>
+      <div class="pal" data-tip="Variación del coste total. Positivo = suben. Negativo = recortas."><div class="pal-h"><div class="pal-t">Costes</div><div class="pal-imp" style="color:var(--g)" id="qImpCst"></div></div><input type="range" id="qSlCst" min="-25" max="25" step="1" value="0" oninput="Q.cst=+this.value;calcQ()"><div class="pal-v" id="qVCst" style="text-align:center">0%</div></div>
+      <div class="pal" data-tip="Venta de inventario a partners con descuento. Genera volumen a menor margen."><div class="pal-h"><div class="pal-t">Canal B2B</div><div class="pal-imp" style="color:var(--p)" id="qImpB2B"></div></div><input type="range" id="qSlB2B" min="0" max="30" step="1" value="0" oninput="Q.b2b=+this.value;calcQ()"><div class="pal-v" id="qVB2B" style="text-align:center">0%</div></div>
+    </div>
+    <div class="sec"><div class="sec-t">Impacto palancas</div><div class="g4" id="qPalSt"></div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════ TAB 1: DASHBOARD ══════ -->
+<div class="panel" id="pan1">
+<div class="lay3">
+  <div class="col">
+    <div class="sec"><div class="sec-t">Costes</div><div class="g4" id="fC"></div></div>
+    <div class="sec"><div class="sec-t">Ingresos y aforo</div><div class="g3" id="fI"></div></div>
+    <div class="sec"><div class="sec-t">Ventas</div><div class="g3" id="fV"></div></div>
+    <div class="sec"><div class="sec-t">Pricing</div><div id="fT"></div><button class="btn-sm" style="margin-top:4px" onclick="addTier()">+ Tramo</button><div id="dPriceCheck"></div></div>
+  </div>
+  <div class="col">
+    <div class="g4" id="dKpis"></div>
+    <div class="sec"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px" id="dBadge"></div><div class="pbar" id="dPbar"></div><div class="plabels" id="dPlbl"></div></div>
+    <div class="sec" style="flex:1;overflow-y:auto"><div class="sec-t">Curva de ventas</div><div class="chart-box" id="dChart"></div><div style="margin-top:6px" id="dRecBox"></div></div>
+  </div>
+  <div class="col">
+    <div class="sec"><div class="sec-t">Cancelar vs ejecutar</div><div class="g3" id="fX" style="margin-bottom:4px"></div><div class="cve" id="dCve"></div><div id="dCveR"></div></div>
+    <div class="sec">
+      <div class="sec-t" style="display:flex;justify-content:space-between;align-items:center">Palancas <div><button class="btn-sm" onclick="resetPalD()" style="margin-right:4px">Reset</button><button class="btn-sm" style="background:#D4A01715;border-color:#D4A01744;color:var(--acc)" onclick="optimD()">Optimizar</button></div></div>
+      <div class="pal"><div class="pal-h"><div class="pal-t">Marketing</div><div class="pal-imp" style="color:var(--b)" id="dImpMkt"></div></div><input type="range" id="dSlMkt" min="-50" max="100" step="1" value="0" oninput="D.palMkt=+this.value;calcD()"><div class="pal-v" id="dVMkt" style="text-align:center">0%</div></div>
+      <div class="pal"><div class="pal-h"><div class="pal-t">Precio</div><div class="pal-imp" style="color:var(--a)" id="dImpPrc"></div></div><input type="range" id="dSlPrc" min="-30" max="30" step="1" value="0" oninput="D.palPrc=+this.value;calcD()"><div class="pal-v" id="dVPrc" style="text-align:center">0%</div></div>
+      <div class="pal"><div class="pal-h"><div class="pal-t">Costes</div><div class="pal-imp" style="color:var(--g)" id="dImpCst"></div></div><input type="range" id="dSlCst" min="-25" max="25" step="1" value="0" oninput="D.palCst=+this.value;calcD()"><div class="pal-v" id="dVCst" style="text-align:center">0%</div></div>
+      <div class="pal"><div class="pal-h"><div class="pal-t">Canal B2B</div><div class="pal-imp" style="color:var(--p)" id="dImpB2B"></div></div><input type="range" id="dSlB2B" min="0" max="30" step="1" value="0" oninput="D.palB2B=+this.value;calcD()"><div class="pal-v" id="dVB2B" style="text-align:center">0%</div></div>
+      <div class="g4" style="margin-top:6px" id="dPalSt"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var TIPS={
+  be:'Punto muerto: entradas mínimas para cubrir todos los costes. Si supera el 80% del aforo, margen de error bajo.',
+  beAdj:'Punto muerto recalculado con las palancas de precio y costes aplicadas.',
+  vel:'Ritmo actual de ventas / Ritmo necesario para llegar al punto muerto. Si el primero es menor, no llegas.',
+  rat:'Porcentaje del ritmo necesario. Por debajo del 60% → demanda lenta. Por debajo del 30% → sin demanda.',
+  proy:'Entradas totales proyectadas a fecha del evento al ritmo actual + palancas B2B.',
+  res:'Beneficio o pérdida proyectada: ingresos menos coste total ajustado.',
+  mar:'Margen sobre ingresos. Porcentaje del ingreso que queda como beneficio.',
+  mkt:'Variación del gasto en marketing. +10% gasto ≈ +5% velocidad de venta (estimación conservadora).',
+  prc:'Variación del precio medio. Subir → más ingreso por entrada pero puede frenar ventas. Bajar → baja punto muerto pero erosiona margen.',
+  cst:'Variación del coste total. Positivo = recortas (producción, rider, seguridad). Negativo = suben. Cada euro menos baja el punto muerto.',
+  b2b:'Canal B2B: venta de inventario a partners (agencias, empresas) con descuento. No visible al público. Genera volumen a menor margen.',
+  beOrig:'Punto muerto original del enunciado o sin palancas.',
+  priceMin:'Precio bruto mínimo para que el ingreso neto por entrada (después de IVA y comisión) cubra el coste por entrada. Por debajo de este precio, pierdes dinero incluso con sold out.'
+};
+var _openPop=null;
+function tip(id){
+  if(_openPop){_openPop.classList.remove('on');if(_openPop.id===id){_openPop=null;return}_openPop=null}
+  var el=document.getElementById(id);
+  if(el){el.classList.add('on');_openPop=el}
+}
+document.addEventListener('click',function(e){
+  if(_openPop&&!e.target.classList.contains('info')){_openPop.classList.remove('on');_openPop=null}
+});
+var _tipN=0;
+function I(key){var id='tip_'+(_tipN++);return '<span style="position:relative;display:inline-block"><span class="info" onclick="event.stopPropagation();tip(\''+id+'\')">i</span><div class="infopop" id="'+id+'">'+TIPS[key]+'</div></span>'}
+
+var fmt=function(n){return isFinite(n)?new Intl.NumberFormat('es-ES',{maximumFractionDigits:0}).format(n):'-'};
+var fmtE=function(n){return isFinite(n)?fmt(n)+'€':'-'};
+var pct=function(n){return isFinite(n)?(n*100).toFixed(1)+'%':'-'};
+
+// ══════ SHARED ══════
+var ES={strong:{l:'Demanda fuerte',h:'#22c55e'},healthy:{l:'Demanda suficiente',h:'#3b82f6'},slow:{l:'Demanda lenta',h:'#f59e0b'},fake:{l:'Demanda engañosa',h:'#f97316'},dead:{l:'Sin demanda',h:'#ef4444'},inviable:{l:'INVIABLE — BE > aforo',h:'#dc2626'}};
+var FS=[{n:'Lanzamiento',t:'T-90 a T-60',c:'#3b82f6'},{n:'Validación',t:'T-60 a T-40',c:'#22c55e'},{n:'Construcción',t:'T-40 a T-20',c:'#f59e0b'},{n:'Momento crítico',t:'T-20 a T-10',c:'#f97316'},{n:'Ejecución final',t:'T-10 a T-0',c:'#ef4444'}];
+var R={
+strong:{
+0:{o:'No tocar. Preparar tramos.',a:function(d){return 'Cero marketing. Velocidad actual: '+fmt(Math.round(d.vr))+'/día, necesaria: '+fmt(Math.round(d.vn))+'/día. Vas sobrado. Configurar 3 tramos de precio.'},k:'Entradas/día vs aforo'},
+1:{o:'Subir precio. Activar upselling.',a:function(d){return 'Siguiente tramo. Ticket neto actual: '+fmtE(Math.round(d.tn))+'. Zona premium, meet & greet, fast lane. Contactar venue para % en F&B.'},k:'Ticket medio neto'},
+2:{o:'Precio máximo. Cero marketing.',a:function(d){return 'Quedan '+fmt(d.af-d.ve)+' entradas. Tramo más alto. Resultado proyectado: '+fmtE(d.res)+'. Ni un euro en promoción.'},k:'Margen neto total'},
+3:{o:'Blindar costes. Cerrar rider.',a:function(d){return 'Marketing a 0. Resultado: '+fmtE(d.res)+'. Rider línea a línea, cerrar extras. Cualquier sobrecoste se come el margen.'},k:'Desviación costes vs ppto'},
+4:{o:'Maximizar on-site. P&L diario.',a:function(d){return 'Resultado base: '+fmtE(d.res)+'. Maximizar F&B y merch. Si multi-día: P&L por jornada.'},k:'Ingresos on-site'}
+},
+healthy:{
+0:{o:'Monitorizar. No acelerar.',a:function(d){return 'Velocidad: '+fmt(Math.round(d.vr))+'/día vs '+fmt(Math.round(d.vn))+' necesaria ('+pct(d.rat)+'). Plan según calendario. No aumentar gasto.'},k:'Entradas/día vs histórico'},
+1:{o:'Confirmar ritmo. Palancas listas.',a:function(d){return 'Proyección: '+fmt(d.pjF)+' (BE: '+fmt(d.be)+'). Faltan '+fmt(Math.max(0,d.be-d.ve))+'. Preparar bundles y B2B sin activar.'},k:'Proyección actual'},
+2:{o:'Ajustar marketing. Subir tramo.',a:function(d){return 'Faltan '+fmt(Math.max(0,d.be-d.ve))+' en '+d.dr+' días. Concentrar mkt en 2-3 canales top. Subir tramo si velocidad permite.'},k:'Coste mkt/entrada'},
+3:{o:'No cambiar nada.',a:function(d){return 'Proyección: '+fmt(d.pjF)+', BE: '+fmt(d.be)+'. Cada venta = margen puro. Resultado: '+fmtE(d.res)+'.'},k:'Margen sobre BE'},
+4:{o:'Ejecutar. Surge mejora resultado.',a:function(d){return 'Resultado: '+fmtE(d.res)+'. 30-40% ventas en últimas semanas. Control de costes.'},k:'Resultado vs ppto'}
+},
+slow:{
+0:{o:'Diagnosticar en 48h.',a:function(d){return 'Velocidad: '+fmt(Math.round(d.vr))+'/día, necesitas '+fmt(Math.round(d.vn))+'/día ('+pct(d.rat)+'). Datos por canal, tramo y semana. Informe en 48h.'},k:'Vendidas vs histórico'},
+1:{o:'Activar palancas. Medir en 7 días.',a:function(d){return 'Faltan '+fmt(Math.max(0,d.be-d.ve))+' entradas en '+d.dr+' días (necesitas '+fmt(Math.round(d.vn))+'/día). Retargeting + lookalikes. Bundles. B2B 10-15%. Medir a 72h.'},k:'Delta velocidad pre/post'},
+2:{o:'7 días para validar.',a:function(d){return 'Gap: '+fmt(Math.max(0,d.be-d.ve))+'. Vel. necesaria: '+fmt(Math.round(d.vn))+'/día vs actual: '+fmt(Math.round(d.vr))+'/día. Día 7 sin mejora → cancelar ('+fmtE(d.cc)+') vs ejecutar ('+fmtE(d.pe)+').'},k:'Gap BE'},
+3:{o:'Diagnóstico + acción 7d. Decisión día 10.',a:function(d){return 'Faltan '+fmt(Math.max(0,d.be-d.ve))+' en '+d.dr+' días. Vel: '+fmt(Math.round(d.vr))+'/día vs '+fmt(Math.round(d.vn))+' necesaria. Días 1-2: datos canal/tramo. Días 2-7: tramos intermedios, bundles, retargeting, B2B 10-15%. Día 7: cancelar ('+fmtE(d.cc)+') vs ejecutar ('+fmtE(d.pe)+'). '+(d.cc<d.pe?'Cancelar ahorra '+fmtE(d.pe-d.cc)+'.':'Ejecutar ahorra '+fmtE(d.cc-d.pe)+'.')+' Día 10: decisión final.'},k:'Velocidad post-activación'},
+4:{o:'Ejecutar mínimos o cancelar.',a:function(d){return 'Cancelar: '+fmtE(d.cc)+'. Ejecutar: '+fmtE(d.pe)+'. '+(d.cc<d.pe?'Cancelar ahorra '+fmtE(d.pe-d.cc)+'.':'Ejecutar ahorra '+fmtE(d.cc-d.pe)+'.')+' Si se sigue: estructura mínima, F&B, última hora.'},k:'Pérdida final'}
+},
+fake:{
+0:{o:'Ignorar pico. Esperar 2 semanas.',a:function(d){return 'Vendidas: '+fmt(d.ve)+' pero velocidad puede ser engañosa. No proyectar sobre acumulado. Esperar 14d.'},k:'Velocidad 7d post-pico'},
+1:{o:'Medir solo últimas 2 semanas.',a:function(d){return 'Media total: '+fmt(Math.round(d.vr))+'/día. Si últimas 2 sem son inferiores, activar palancas.'},k:'Velocidad últ. 2 sem'},
+2:{o:'Datos reales al equipo. 7 días.',a:function(d){return 'Gap al BE: '+fmt(Math.max(0,d.be-d.ve))+'. Velocidad post-pico, no acumulado. Mkt quirúrgico + B2B + bundles. 7d.'},k:'Velocidad post-activación'},
+3:{o:'Números a dirección. Decidir hoy.',a:function(d){return 'Gap: '+fmt(Math.max(0,d.be-d.ve))+' en '+d.dr+' días. Cancelar: '+fmtE(d.cc)+', ejecutar: '+fmtE(d.pe)+'. '+(d.cc<d.pe?'Cancelar.':'Ejecutar.')+' Decidir hoy.'},k:'Cancelar vs ejecutar'},
+4:{o:'Ejecutar mínimos. Post-mortem.',a:function(d){return 'Resultado: '+fmtE(d.res)+'. Estructura mínima. F&B/merch. Documentar por qué no se actuó antes.'},k:'Pérdida + lecciones'}
+},
+dead:{
+0:{o:'Causa raíz. Corregir o salir.',a:function(d){return fmt(d.ve)+' vendidas en '+d.dv+' días ('+fmt(Math.round(d.vr))+'/día). BE: '+fmt(d.be)+' ('+pct(d.bp)+' aforo). 48h: ¿plaza? ¿artista? ¿precio? Corregible → corregir. Estructural → cancelar.'},k:'Causa'},
+1:{o:'Marketing a 0. Calcular cancelación.',a:function(d){return 'Ni un euro más en mkt. Cancelar: '+fmtE(d.cc)+'. Ejecutar pierde: '+fmtE(d.pe)+'. '+(d.cc<d.pe?'Cancelar ahorra '+fmtE(d.pe-d.cc)+'.':'Ejecutar pierde menos.')+' Cada semana hunde más.'},k:'Coste cancelar'},
+2:{o:'Cancelar. Si no se puede, mínimos.',a:function(d){return 'Cancelar: '+fmtE(d.cc)+'. Ejecutar: '+fmtE(d.pe)+'. '+(d.cc<d.pe?'Cancelar.':'Si hundidos > penalización, ejecutar mínimo + B2B.')},k:'Pérdida minimizada'},
+3:{o:'Elegir número menor. Decidir hoy.',a:function(d){return 'Cancelar: '+fmtE(d.cc)+'. Ejecutar: '+fmtE(d.pe)+'. Diferencia: '+fmtE(Math.abs(d.cc-d.pe))+'. '+(d.cc<d.pe?'Cancelar.':'Ejecutar mínimo.')+' Decidir hoy.'},k:'Cancelar vs ejecutar'},
+4:{o:'Ejecutar mínimo. Documentar.',a:function(d){return 'Resultado: '+fmtE(d.res)+'. Producción mínima. F&B/merch. Post-mortem.'},k:'Pérdida + lecciones'}
+},
+inviable:{
+0:{o:'NO LANZAR. Renegociar.',a:function(d){return 'BE ('+fmt(d.be)+') > aforo ('+fmt(d.af)+'). Coste/entrada: '+fmtE(Math.round(d.tc/d.af))+' vs TN: '+fmtE(Math.round(d.tn))+'. Renegociar caché o subir precio hasta BE < 80% aforo.'},k:'Coste/entrada vs TN'},
+1:{o:'NO LANZAR. Renegociar o cancelar.',a:function(d){return 'BE ('+fmt(d.be)+') > aforo ('+fmt(d.af)+'). Cada día hunde más. Cancelar: '+fmtE(d.cc)+'.'},k:'Coste/entrada vs TN'},
+2:{o:'Renegociar, subir precio o cancelar.',a:function(d){return 'BE: '+fmt(d.be)+', aforo: '+fmt(d.af)+'. Cancelar: '+fmtE(d.cc)+'. Ejecutar pierde: '+fmtE(d.pe)+'. '+(d.cc<d.pe?'Cancelar ahorra '+fmtE(d.pe-d.cc)+'.':'Ejecutar pierde menos.')+' 48h.'},k:'Pérdida mínima'},
+3:{o:'Elegir menor pérdida. Hoy.',a:function(d){return 'Cancelar: '+fmtE(d.cc)+'. Ejecutar: '+fmtE(d.pe)+'. Diferencia: '+fmtE(Math.abs(d.cc-d.pe))+'. '+(d.cc<d.pe?'Cancelar.':'Ejecutar mínimo.')+' Hoy.'},k:'Cancelar vs ejecutar'},
+4:{o:'Ejecutar mínimo. Post-mortem.',a:function(d){return 'Resultado: '+fmtE(d.res)+'. Producción mínima. Post-mortem: quién aprobó BE > aforo.'},k:'Pérdida + cambio proceso'}
+}
+};
+function getRec(est,fase,d){var r=R[est][fase];return{o:r.o,a:typeof r.a==='function'?r.a(d):r.a,k:r.k}}
+
+function classify(bp,rat,dv,ve,af,dr){
+  var est;
+  if(bp>1)est='inviable';else if(bp>0.95||rat<0.3)est='dead';else if(rat<0.6)est='slow';else if(rat<0.85)est='healthy';else est='strong';
+  var fase;
+  if(dr>60)fase=0;else if(dr>40)fase=1;else if(dr>20)fase=2;else if(dr>10)fase=3;else fase=4;
+  if(fase===2&&dr<=30&&rat<0.5)fase=3;
+  return{est:est,fase:fase};
+}
+function makeChart(W,H,e,ve,af,be,pjF,dv,dr){
+  var pl=35,cW=W-pl-10,cH=H-18,mx=Math.max(be,pjF,af)*1.1||1,dT=dv+dr||1;
+  var xS=pl+(dv/dT)*cW,yS=cH-(ve/mx)*cH,xE=pl+cW,yP=cH-(pjF/mx)*cH,yBE=cH-(be/mx)*cH,yAf=cH-(af/mx)*cH;
+  var s='<svg viewBox="0 0 '+W+' '+H+'"><rect x="'+pl+'" y="0" width="'+(xS-pl)+'" height="'+cH+'" fill="'+e.h+'" opacity=".03"/>';
+  s+='<line x1="'+pl+'" y1="'+yBE+'" x2="'+xE+'" y2="'+yBE+'" stroke="#ef4444" stroke-width=".7" stroke-dasharray="3,2"/><text x="'+(pl+2)+'" y="'+(yBE-3)+'" fill="#ef4444" font-size="7" font-family="monospace">BE '+fmt(be)+'</text>';
+  s+='<line x1="'+pl+'" y1="'+yAf+'" x2="'+xE+'" y2="'+yAf+'" stroke="#444" stroke-width=".3" stroke-dasharray="2,3"/><text x="'+(pl+2)+'" y="'+(yAf-3)+'" fill="#444" font-size="6" font-family="monospace">Aforo '+fmt(af)+'</text>';
+  s+='<line x1="'+pl+'" y1="'+cH+'" x2="'+xS+'" y2="'+yS+'" stroke="'+e.h+'" stroke-width="2"/><circle cx="'+xS+'" cy="'+yS+'" r="3" fill="'+e.h+'"/><text x="'+(xS+5)+'" y="'+(yS-3)+'" fill="'+e.h+'" font-size="8" font-family="monospace">'+fmt(ve)+'</text>';
+  s+='<line x1="'+xS+'" y1="'+yS+'" x2="'+xE+'" y2="'+yP+'" stroke="'+e.h+'" stroke-width="1.2" stroke-dasharray="4,3"/><circle cx="'+xE+'" cy="'+yP+'" r="2.5" fill="'+e.h+'" opacity=".5"/><text x="'+(xE-40)+'" y="'+(yP-3)+'" fill="'+e.h+'" font-size="8" font-family="monospace" opacity=".7">'+fmt(pjF)+'</text>';
+  s+='<text x="'+xS+'" y="'+(H-1)+'" text-anchor="middle" fill="#555" font-size="7" font-family="monospace">Hoy</text></svg>';
+  return s;
+}
+function renderPhase(pid,lid,fase){
+  document.getElementById(pid).innerHTML=FS.map(function(f,i){return '<div style="flex:1;background:'+f.c+';opacity:'+(i===fase?1:.15)+'"></div>'}).join('');
+  document.getElementById(lid).innerHTML=FS.map(function(f,i){return '<div class="plbl'+(i===fase?' on':'')+'">'+f.n+'</div>'}).join('');
+}
+function renderCve(cid,rid,cc,pe){
+  var mj=cc<pe?'cancelar':'ejecutar',df=Math.abs(cc-pe);
+  document.getElementById(cid).innerHTML='<div class="cve-c'+(mj==='cancelar'?' best':'')+'"><div class="cve-l">Cancelar</div><div class="cve-v" style="color:var(--r)">'+fmtE(cc)+'</div></div><div class="cve-c'+(mj==='ejecutar'?' best':'')+'"><div class="cve-l">Ejecutar</div><div class="cve-v" style="color:'+(pe>0?'var(--r)':'var(--g)')+'">'+fmtE(pe)+'</div></div>';
+  var msg=mj==='cancelar'?'CANCELAR · Ahorras '+fmtE(df)+' vs ejecutar':'EJECUTAR · Ahorras '+fmtE(df)+' vs cancelar';
+  document.getElementById(rid).innerHTML='<div class="cve-rec" style="background:'+(mj==='cancelar'?'#ef444412;color:#ef4444':'#22c55e12;color:#22c55e')+'">'+msg+'</div>';
+  return mj;
+}
+function renderRec(id,e,r,mj,cc,pe){
+  document.getElementById(id).innerHTML='<div class="rec-box" style="background:'+e.h+'12;border:1px solid '+e.h+'33"><div class="rec-obj" style="color:'+e.h+'">'+r.o+'</div><div class="rec-txt">'+r.a+'</div><div class="rec-kpi">KPI: '+r.k+'</div></div><div class="rec-box" style="background:var(--bg3);margin-top:4px"><div style="font-size:7px;color:var(--t3);text-transform:uppercase;margin-bottom:1px">Plan B</div><div class="rec-txt">Cancel: '+fmtE(cc)+' · Ejec: '+fmtE(pe)+'</div></div>';
+}
+function priceCheck(el,tc,af,iva,com){
+  if(!af||!tc){el.innerHTML='';return}
+  var costPerEntry=tc/af;
+  var minPriceBruto=costPerEntry/((1-iva/100)*(1-com/100));
+  var ok=minPriceBruto<200;
+  el.innerHTML='<div class="price-check" style="background:'+(ok?'#22c55e12;color:#22c55e':'#ef444412;color:#ef4444')+'">Precio mínimo viable: <b>'+fmtE(Math.ceil(minPriceBruto))+'</b> (coste/entrada: '+fmtE(Math.round(costPerEntry))+')</div>';
+}
+
+// ══════ TAB 0: CASO RÁPIDO ══════
+var Q={mkt:0,prc:0,cst:0,b2b:0};
+var activeTabIdx=0;
+function resetActive(){activeTabIdx===0?resetQ():resetD()}
+function resetQ(){
+  Q={mkt:0,prc:0,cst:0,b2b:0};
+  document.getElementById('qa').value=10000;document.getElementById('qv').value=3500;document.getElementById('qd').value=25;document.getElementById('qb').value=7000;document.getElementById('qp').value=45;document.getElementById('qdv').value=65;document.getElementById('qc').value='';document.getElementById('qPen').value=40000;document.getElementById('qHun').value=25000;
+  document.getElementById('qSlMkt').value=0;document.getElementById('qSlPrc').value=0;document.getElementById('qSlCst').value=0;document.getElementById('qSlB2B').value=0;
+  calcQ('b');
+}
+function calcQ(src){
+  var af=Math.max(0,Number(document.getElementById('qa').value)||0),ve=Math.max(0,Number(document.getElementById('qv').value)||0),dr=Math.max(0,Number(document.getElementById('qd').value)||0),pr=Math.max(0,Number(document.getElementById('qp').value)||0),dv=Math.max(1,Number(document.getElementById('qdv').value)||Math.max(1,90-dr)),pen=Math.max(0,Number(document.getElementById('qPen').value)||0),hun=Math.max(0,Number(document.getElementById('qHun').value)||0);
+  // Cap vendidas to aforo
+  if(af>0&&ve>af){ve=af;document.getElementById('qv').value=af}
+  // If aforo shrinks below vendidas, cap vendidas
+  if(src==='a'&&ve>af){ve=af;document.getElementById('qv').value=af}
+  var be0=Number(document.getElementById('qb').value)||0,tc0=Number(document.getElementById('qc').value)||0;
+  var tn0=pr>0?pr*0.828:0;
+  if(src==='c'&&tc0>0&&tn0>0){be0=Math.ceil(tc0/tn0);document.getElementById('qb').value=be0}
+  else if(src==='p'&&be0>0&&tn0>0){tc0=Math.round(be0*tn0);document.getElementById('qc').value=tc0}
+  else if(src==='b'&&be0>0&&tn0>0){tc0=Math.round(be0*tn0);document.getElementById('qc').value=tc0}
+  else if(be0>0&&tn0>0&&!tc0){tc0=Math.round(be0*tn0);document.getElementById('qc').value=tc0}
+  else if(tc0>0&&tn0>0&&!be0){be0=Math.ceil(tc0/tn0);document.getElementById('qb').value=be0}
+  var w=[];
+  if(af>0&&be0>af)w.push('⚠ BE ('+fmt(be0)+') > aforo — inviable');
+  if(dr<=0&&src)w.push('⚠ Días restantes > 0');
+  document.getElementById('qTN').textContent=tn0>0?fmtE(Math.round(tn0)):'-';
+  document.getElementById('qBPct').textContent=af>0&&be0>0?pct(be0/af)+' aforo':'';
+  document.getElementById('qWarn').innerHTML=w.length?w.map(function(x){return '<div class="warn">'+x+'</div>'}).join(''):'';
+  priceCheck(document.getElementById('qPriceCheck'),tc0,af,10,8);
+  if(!af||!be0||!pr||dr<=0)return;
+  // ve already capped at input level
+  // === PALANCA LOGIC (intuitive: positive = increase, negative = decrease) ===
+  // Marketing: +20% = spend 20% more → cost UP, velocity UP
+  var mktBase=tc0*0.07; // ~7% of cost is marketing
+  var mktExtra=mktBase*(Q.mkt/100); // extra cost from marketing change
+  // Costes: +10% = costs go UP 10%. -10% = costs go DOWN 10%.
+  var costChange=tc0*(Q.cst/100); // positive = costs increase
+  // Total adjusted cost
+  var tcA=tc0+mktExtra+costChange;
+  var prAdj=pr*(1+Q.prc/100),tnAdj=prAdj*0.828;
+  var be=tnAdj>0?Math.ceil(tcA/tnAdj):99999,bp=af>0?be/af:1;
+  var vr=dv>0?ve/dv:0,rest=Math.max(0,be-ve),vn=dr>0?rest/dr:99999;
+  var va=vr*(1+(Q.mkt/100)*0.5); // marketing boosts velocity
+  var pj=Math.min(af,Math.round(ve+va*dr));
+  var b2e=Math.round((af-ve)*(Q.b2b/100)),b2i=b2e*prAdj*(1-20/100)*0.828;
+  var pjF=Math.min(af,pj+b2e);
+  var ing=Math.round(pjF*tnAdj)+b2i,res=ing-tcA,mar=ing>0?res/ing:0;
+  // Dual classification: BASE (no palancas) and ADJUSTED (with palancas)
+  var tn0raw=pr*0.828,be0raw=tn0raw>0?Math.ceil(tc0/tn0raw):99999,bp0raw=af>0?be0raw/af:1;
+  var ratBase=vn>0&&isFinite(vn)?vr/vn:vr>0?2:0;
+  var clBase=classify(bp0raw,ratBase,dv,ve,af,dr);
+  var restAdj=Math.max(0,be-ve-b2e);
+  var vnAdj=dr>0?restAdj/dr:99999;
+  var ratAdj=vnAdj>0&&isFinite(vnAdj)?va/vnAdj:va>0?2:0;
+  var clAdj=classify(bp,ratAdj,dv,ve,af,dr);
+  // Use adjusted state for display, but detect if palancas changed the state
+  var palancasActive=(Q.mkt!==0||Q.prc!==0||Q.cst!==0||Q.b2b!==0);
+  var stateImproved=palancasActive&&(clAdj.est!==clBase.est);
+  var e=ES[clAdj.est],f=FS[clAdj.fase];
+  var eBase=ES[clBase.est];
+  var bC=bp>.75?'var(--r)':bp>.6?'var(--a)':'var(--g)';if(bp>1)bC='#dc2626';
+  var cc=pen+hun+Math.round(ve*prAdj),pe=Math.max(0,tcA-ing);
+  var rd={vr:va,vn:vnAdj,rat:ratAdj,be:be,bp:bp,ve:ve,af:af,dr:dr,dv:dv,pjF:pjF,res:res,tn:tnAdj,tc:tc0,cc:cc,pe:pe};
+  // If palancas improved state, show palanca execution rec. Otherwise show state rec.
+  var r;
+  if(stateImproved){
+    var palDesc=[];
+    if(Q.mkt!==0)palDesc.push('Marketing '+(Q.mkt>0?'+':'')+Q.mkt+'% (vel: '+fmt(Math.round(va))+'/día, coste extra: '+fmtE(Math.round(mktExtra))+')');
+    if(Q.prc!==0)palDesc.push('Precio '+(Q.prc>0?'+':'')+Q.prc+'% (TN: '+fmtE(Math.round(tnAdj))+')');
+    if(Q.cst!==0)palDesc.push('Costes '+Q.cst+'% ('+fmtE(Math.round(tc0*(Q.cst/100)))+')');
+    if(Q.b2b!==0)palDesc.push('B2B '+Q.b2b+'% ('+fmt(b2e)+' entradas, '+fmtE(Math.round(b2i))+')');
+    r={o:'Ejecutar palancas. Estado base: '+eBase.l+'.',a:'Sin palancas el evento es '+eBase.l.toLowerCase()+'. Con las palancas aplicadas pasa a '+e.l.toLowerCase()+'. Acciones: '+palDesc.join('. ')+'. Resultado proyectado: '+fmtE(res)+'. Ejecutar estas palancas inmediatamente.',k:'Seguimiento diario de velocidad post-activación'};
+  } else {
+    r=getRec(clAdj.est,clAdj.fase,rd);
+  }
+  document.getElementById('qKpis').innerHTML='<div class="st"><div class="st-l">BE orig'+I('be')+'</div><div class="st-v" style="font-size:12px">'+fmt(be0)+'</div><div class="st-s">'+pct(be0/af)+'</div></div><div class="st"><div class="st-l">BE ajust'+I('beAdj')+'</div><div class="st-v" style="font-size:12px;color:'+bC+'">'+fmt(be)+'</div></div><div class="st"><div class="st-l">Vel r/n'+I('vel')+'</div><div class="st-v" style="font-size:11px;color:'+e.h+'">'+fmt(Math.round(va))+'/'+fmt(Math.round(vnAdj))+'</div><div class="st-s">'+pct(ratAdj)+'</div></div><div class="st"><div class="st-l">Resultado'+I('res')+'</div><div class="st-v" style="font-size:12px;color:'+(res>=0?'var(--g)':'var(--r)')+'">'+fmtE(res)+'</div><div class="st-s">Proy: '+fmt(pjF)+'</div></div>';
+  document.getElementById('qBadges').innerHTML=(stateImproved?'<div class="badge" style="background:'+eBase.h+'22;color:'+eBase.h+';text-decoration:line-through;opacity:.6"><div class="dot" style="background:'+eBase.h+'"></div>'+eBase.l+'</div><span style="color:var(--t3);font-size:9px">→</span>':'')+'<div class="badge" style="background:'+e.h+'22;color:'+e.h+'"><div class="dot" style="background:'+e.h+'"></div>'+e.l+'</div><div class="badge" style="background:'+f.c+'22;color:'+f.c+'"><div class="dot" style="background:'+f.c+'"></div>'+f.n+'</div>';
+  renderPhase('qPbar','qPlbl',clAdj.fase);
+  document.getElementById('qChart').innerHTML=makeChart(400,120,e,ve,af,be,pjF,dv,dr);
+  document.getElementById('qRecBox').innerHTML='<div class="rec-box" style="background:'+e.h+'12;border:1px solid '+e.h+'33"><div class="rec-obj" style="color:'+e.h+'">'+r.o+'</div><div class="rec-txt">'+r.a+'</div><div class="rec-kpi">KPI: '+r.k+'</div></div>';
+  renderCve('qCve','qCveR',cc,pe);
+  document.getElementById('qImpMkt').textContent='Vel: '+fmt(Math.round(va))+'/d · Coste: '+(mktExtra>=0?'+':'')+fmtE(Math.round(mktExtra));document.getElementById('qVMkt').textContent=(Q.mkt>0?'+':'')+Q.mkt+'%';
+  document.getElementById('qImpPrc').textContent='TN: '+fmtE(Math.round(tnAdj));document.getElementById('qVPrc').textContent=(Q.prc>0?'+':'')+Q.prc+'%';
+  document.getElementById('qImpCst').textContent='Coste: '+(costChange>=0?'+':'')+fmtE(Math.round(costChange));document.getElementById('qVCst').textContent=(Q.cst>0?'+':'')+Q.cst+'%';
+  document.getElementById('qImpB2B').textContent=fmt(b2e)+' uds · '+fmtE(Math.round(b2i));document.getElementById('qVB2B').textContent=Q.b2b+'%';
+  var totalCostDelta=mktExtra+costChange;
+  var beDelta=be-be0;
+  document.getElementById('qPalSt').innerHTML='<div class="st"><div class="st-l">Coste total</div><div class="st-v" style="font-size:10px;color:'+(totalCostDelta>0?'var(--r)':totalCostDelta<0?'var(--g)':'var(--t3)')+'">'+fmtE(tcA)+'</div></div><div class="st"><div class="st-l">BE ajust</div><div class="st-v" style="font-size:10px;color:'+(beDelta>0?'var(--r)':beDelta<0?'var(--g)':'var(--t3)')+'">'+fmt(be)+'</div></div><div class="st"><div class="st-l">B2B uds</div><div class="st-v" style="font-size:10px;color:var(--p)">+'+fmt(b2e)+'</div></div><div class="st"><div class="st-l">Resultado</div><div class="st-v" style="font-size:10px;color:'+(res>=0?'var(--g)':'var(--r)')+'">'+fmtE(res)+'</div></div>';
+}
+
+// ══════ TAB 1: DASHBOARD ══════
+var D={cache:120000,produccion:45000,venue:18000,seguridad:8000,sgae:6000,marketing:15000,seguros:4000,otros:5000,aforo:5000,iva:10,comision:8,vendidas:1800,diasVenta:35,diasRestantes:25,palMkt:0,palPrc:0,palB2B:0,palCst:0,pen:40000,hun:25000,reemb:100};
+var DT=[{n:'Early bird',p:35,a:20},{n:'General',p:45,a:60},{n:'Últimas',p:55,a:20}];
+var D0d=JSON.parse(JSON.stringify(D)),DT0=JSON.parse(JSON.stringify(DT));
+var STP={cache:5000,produccion:5000,venue:1000,seguridad:1000,sgae:500,marketing:1000,seguros:500,otros:500,aforo:500,pen:5000,hun:5000,vendidas:100,diasVenta:5,diasRestantes:5,iva:1,comision:1,reemb:10};
+function resetD(){
+  D=JSON.parse(JSON.stringify(D0d));DT=JSON.parse(JSON.stringify(DT0));
+  document.getElementById('dSlMkt').value=0;document.getElementById('dSlPrc').value=0;document.getElementById('dSlCst').value=0;document.getElementById('dSlB2B').value=0;
+  initD();calcD();
+}
+function mkF(el,key,lbl,unit){
+  var d=document.createElement('div');d.className='fld';
+  d.innerHTML='<label>'+lbl+'</label><input type="number" id="d_'+key+'" value="'+D[key]+'" step="'+(STP[key]||1)+'" min="0"><div class="u">'+unit+'</div>';
+  var i=d.querySelector('input');
+  i.addEventListener('focus',function(){this.select()});
+  i.addEventListener('input',function(){
+    var v=Number(this.value);if(v<0){v=0;this.value=0}
+    if(key==='vendidas'&&v>D.aforo){v=D.aforo;this.value=D.aforo}
+    if(key==='aforo'&&D.vendidas>v){D.vendidas=v;var ve=document.getElementById('d_vendidas');if(ve)ve.value=v}
+    D[key]=v;calcD();
+  });
+  i.addEventListener('keydown',function(ev){if(ev.key==='Enter'){this.dispatchEvent(new Event('input'));this.blur()}});
+  el.appendChild(d);
+}
+function renderDT(){
+  document.getElementById('fT').innerHTML=DT.map(function(t,i){return '<div class="g3" style="margin-bottom:3px"><div class="fld"><label>Nombre</label><input value="'+t.n+'" onfocus="this.select()" onchange="DT['+i+'].n=this.value;calcD()"></div><div class="fld"><label>Precio</label><input type="number" value="'+t.p+'" step="5" onfocus="this.select()" oninput="DT['+i+'].p=Number(this.value)||0;calcD()"></div><div class="fld"><label>% Aforo</label><input type="number" value="'+t.a+'" step="5" onfocus="this.select()" oninput="DT['+i+'].a=Number(this.value)||0;calcD()"><div class="u">'+(DT.length>1?'<span style="cursor:pointer;color:var(--r)" onclick="DT.splice('+i+',1);renderDT();calcD()">✕</span>':'')+'</div></div></div>'}).join('');
+}
+window.addTier=function(){DT.push({n:'Nuevo',p:50,a:10});renderDT();calcD()};
+function initD(){
+  ['fC','fI','fV','fX'].forEach(function(id){document.getElementById(id).innerHTML=''});
+  mkF(document.getElementById('fC'),'cache','Caché artista','€');mkF(document.getElementById('fC'),'produccion','Producción','€');mkF(document.getElementById('fC'),'venue','Venue / Recinto','€');mkF(document.getElementById('fC'),'seguridad','Seguridad','€');mkF(document.getElementById('fC'),'sgae','SGAE','€');mkF(document.getElementById('fC'),'marketing','Marketing','€');mkF(document.getElementById('fC'),'seguros','Seguros','€');mkF(document.getElementById('fC'),'otros','Otros gastos','€');
+  mkF(document.getElementById('fI'),'aforo','Aforo total','pax');mkF(document.getElementById('fI'),'iva','IVA','%');mkF(document.getElementById('fI'),'comision','Comisión ticketera','%');
+  mkF(document.getElementById('fV'),'vendidas','Vendidas hoy','entradas');mkF(document.getElementById('fV'),'diasVenta','Días en venta','días');mkF(document.getElementById('fV'),'diasRestantes','Días restantes','días');
+  mkF(document.getElementById('fX'),'pen','Penalización','€');mkF(document.getElementById('fX'),'hun','Costes hundidos','€');mkF(document.getElementById('fX'),'reemb','Reembolso','%');
+  renderDT();
+}
+function calcD(){
+  var tc=D.cache+D.produccion+D.venue+D.seguridad+D.sgae+D.marketing+D.seguros+D.otros;
+  // Marketing: +20% = spend more → cost UP, velocity UP
+  var mktBaseD=D.marketing;
+  var mktExtraD=mktBaseD*(D.palMkt/100);
+  // Costes: +10% = costs UP. -10% = costs DOWN.
+  var costChangeD=tc*(D.palCst/100);
+  var tcA=tc+mktExtraD+costChangeD;
+  var tp=DT.reduce(function(s,t){return s+t.a},0)||100;
+  var ap=DT.reduce(function(s,t){return s+t.p*(t.a/tp)},0)*(1+D.palPrc/100);
+  var tn=ap*(1-D.iva/100)*(1-D.comision/100);
+  var be=tn>0?Math.ceil(tcA/tn):99999,bp=D.aforo>0?be/D.aforo:1;
+  var ve=D.vendidas; // already capped at input level
+  var vr=D.diasVenta>0?ve/D.diasVenta:0,rest=Math.max(0,be-ve),vn=D.diasRestantes>0?rest/D.diasRestantes:99999;
+  var va=vr*(1+(D.palMkt/100)*0.5);
+  var pj=Math.min(D.aforo,Math.round(ve+va*D.diasRestantes));
+  var b2e=Math.round((D.aforo-ve)*(D.palB2B/100));
+  var b2i=b2e*ap*(1-20/100)*(1-D.iva/100)*(1-D.comision/100);
+  var pjF=Math.min(D.aforo,pj+b2e),ing=Math.round(pjF*tn)+b2i,res=ing-tcA,mar=ing>0?res/ing:0;
+  // Dual classification
+  var apBase0=DT.reduce(function(s,t){return s+t.p*(t.a/tp)},0);
+  var tn0raw=apBase0*(1-D.iva/100)*(1-D.comision/100);
+  var be0raw=tn0raw>0?Math.ceil(tc/tn0raw):99999,bp0raw=D.aforo>0?be0raw/D.aforo:1;
+  var ratBase=vn>0&&isFinite(vn)?vr/vn:vr>0?2:0;
+  var clBase=classify(bp0raw,ratBase,D.diasVenta,ve,D.aforo,D.diasRestantes);
+  var restAdj=Math.max(0,be-ve-b2e);
+  var vnAdj=D.diasRestantes>0?restAdj/D.diasRestantes:99999;
+  var ratAdj=vnAdj>0&&isFinite(vnAdj)?va/vnAdj:va>0?2:0;
+  var clAdj=classify(bp,ratAdj,D.diasVenta,ve,D.aforo,D.diasRestantes);
+  var palancasActiveD=(D.palMkt!==0||D.palPrc!==0||D.palCst!==0||D.palB2B!==0);
+  var stateImprovedD=palancasActiveD&&(clAdj.est!==clBase.est);
+  var e=ES[clAdj.est],f=FS[clAdj.fase];
+  var eBaseD=ES[clBase.est];
+  var bC=bp>.75?'var(--r)':bp>.6?'var(--a)':'var(--g)';if(bp>1)bC='#dc2626';
+  var beO=Math.ceil(tc/(apBase0*(1-D.iva/100)*(1-D.comision/100)||1));
+  var cc=D.pen+D.hun+Math.round(D.vendidas*ap*(D.reemb/100)),pe=Math.max(0,tcA-ing);
+  var rd={vr:va,vn:vnAdj,rat:ratAdj,be:be,bp:bp,ve:ve,af:D.aforo,dr:D.diasRestantes,dv:D.diasVenta,pjF:pjF,res:res,tn:tn,tc:tc,cc:cc,pe:pe};
+  var r;
+  if(stateImprovedD){
+    var pd=[];
+    if(D.palMkt!==0)pd.push('Marketing '+(D.palMkt>0?'+':'')+D.palMkt+'% (vel: '+fmt(Math.round(va))+'/día, coste: '+fmtE(Math.round(mktExtraD))+')');
+    if(D.palPrc!==0)pd.push('Precio '+(D.palPrc>0?'+':'')+D.palPrc+'% (TN: '+fmtE(Math.round(tn))+')');
+    if(D.palCst!==0)pd.push('Costes '+D.palCst+'% ('+fmtE(Math.round(costChangeD))+')');
+    if(D.palB2B!==0)pd.push('B2B '+D.palB2B+'% ('+fmt(b2e)+' uds, '+fmtE(Math.round(b2i))+')');
+    r={o:'Ejecutar palancas. Estado base: '+eBaseD.l+'.',a:'Sin palancas: '+eBaseD.l.toLowerCase()+'. Con palancas: '+e.l.toLowerCase()+'. Acciones: '+pd.join('. ')+'. Resultado: '+fmtE(res)+'. Ejecutar inmediatamente.',k:'Velocidad diaria post-activación'};
+  } else {
+    r=getRec(clAdj.est,clAdj.fase,rd);
+  }
+  var dW='';
+  if(bp>1)dW+='<div class="warn">⚠ INVIABLE: BE ('+fmt(be)+') > aforo ('+fmt(D.aforo)+'). Coste/entrada: '+fmtE(Math.round(tcA/D.aforo))+' vs TN: '+fmtE(Math.round(tn))+'</div>';
+  document.getElementById('dKpis').innerHTML=dW+'<div class="st"><div class="st-l">BE'+I('be')+'</div><div class="st-v" style="font-size:12px;color:'+bC+'">'+fmt(be)+'</div><div class="st-s">'+pct(bp)+' aforo</div></div><div class="st"><div class="st-l">Vel r/n'+I('vel')+'</div><div class="st-v" style="font-size:11px;color:'+e.h+'">'+fmt(Math.round(va))+'/'+fmt(Math.round(vnAdj))+'</div><div class="st-s">'+pct(ratAdj)+'</div></div><div class="st"><div class="st-l">Proyección'+I('proy')+'</div><div class="st-v" style="font-size:12px;color:'+(pjF>=be?'var(--g)':'var(--r)')+'">'+fmt(pjF)+'</div></div><div class="st"><div class="st-l">Resultado'+I('res')+'</div><div class="st-v" style="font-size:12px;color:'+(res>=0?'var(--g)':'var(--r)')+'">'+fmtE(res)+'</div><div class="st-s">'+pct(mar)+'</div></div>';
+  renderPhase('dPbar','dPlbl',clAdj.fase);
+  document.getElementById('dBadge').innerHTML=(stateImprovedD?'<div class="badge" style="background:'+eBaseD.h+'22;color:'+eBaseD.h+';text-decoration:line-through;opacity:.6"><div class="dot" style="background:'+eBaseD.h+'"></div>'+eBaseD.l+'</div><span style="color:var(--t3);font-size:9px">→</span>':'')+'<div class="badge" style="background:'+e.h+'22;color:'+e.h+'"><div class="dot" style="background:'+e.h+'"></div>'+e.l+'</div><div class="badge" style="background:'+f.c+'22;color:'+f.c+'"><div class="dot" style="background:'+f.c+'"></div>'+f.n+'</div>';
+  document.getElementById('dRecBox').innerHTML='<div class="rec-box" style="background:'+e.h+'12;border:1px solid '+e.h+'33;padding:10px 12px"><div class="rec-obj" style="color:'+e.h+';font-size:12px">'+r.o+'</div><div class="rec-txt" style="font-size:11px;line-height:1.6">'+r.a+'</div><div class="rec-kpi" style="font-size:9px;margin-top:4px">KPI: '+r.k+'</div></div>';
+  document.getElementById('dChart').innerHTML=makeChart(400,120,e,ve,D.aforo,be,pjF,D.diasVenta,D.diasRestantes);
+  priceCheck(document.getElementById('dPriceCheck'),tc,D.aforo,D.iva,D.comision);
+  document.getElementById('dImpMkt').textContent='Vel: '+fmt(Math.round(va))+'/d · Coste: '+(mktExtraD>=0?'+':'')+fmtE(Math.round(mktExtraD));document.getElementById('dVMkt').textContent=(D.palMkt>0?'+':'')+D.palMkt+'%';
+  document.getElementById('dImpPrc').textContent='TN: '+fmtE(Math.round(tn));document.getElementById('dVPrc').textContent=(D.palPrc>0?'+':'')+D.palPrc+'%';
+  document.getElementById('dImpCst').textContent='Coste: '+(costChangeD>=0?'+':'')+fmtE(Math.round(costChangeD));document.getElementById('dVCst').textContent=(D.palCst>0?'+':'')+D.palCst+'%';
+  document.getElementById('dImpB2B').textContent=fmt(b2e)+' uds · '+fmtE(Math.round(b2i));document.getElementById('dVB2B').textContent=D.palB2B+'%';
+  var totalCostDeltaD=mktExtraD+costChangeD;
+  var beDeltaD=be-beO;
+  document.getElementById('dPalSt').innerHTML='<div class="st"><div class="st-l">Coste total</div><div class="st-v" style="font-size:10px;color:'+(totalCostDeltaD>0?'var(--r)':totalCostDeltaD<0?'var(--g)':'var(--t3)')+'">'+fmtE(tcA)+'</div></div><div class="st"><div class="st-l">BE ajust</div><div class="st-v" style="font-size:10px;color:'+(beDeltaD>0?'var(--r)':beDeltaD<0?'var(--g)':'var(--t3)')+'">'+fmt(be)+'</div></div><div class="st"><div class="st-l">B2B uds</div><div class="st-v" style="font-size:10px;color:var(--p)">+'+fmt(b2e)+'</div></div><div class="st"><div class="st-l">Resultado</div><div class="st-v" style="font-size:10px;color:'+(res>=0?'var(--g)':'var(--r)')+'">'+fmtE(res)+'</div></div>';
+  renderCve('dCve','dCveR',cc,pe);
+}
+
+// ══════ TABS ══════
+window.goTab=function(i){
+  activeTabIdx=i;
+  document.querySelectorAll('.tab').forEach(function(t,j){t.className='tab'+(j===i?' on':'')});
+  document.querySelectorAll('.panel').forEach(function(p,j){p.classList.toggle('on',j===i)});
+};
+
+// ══════ RESET & OPTIMIZE PALANCAS ══════
+function resetPalQ(){
+  Q.mkt=0;Q.prc=0;Q.cst=0;Q.b2b=0;
+  document.getElementById('qSlMkt').value=0;
+  document.getElementById('qSlPrc').value=0;
+  document.getElementById('qSlCst').value=0;
+  document.getElementById('qSlB2B').value=0;
+  calcQ();
+}
+function resetPalD(){
+  D.palMkt=0;D.palPrc=0;D.palCst=0;D.palB2B=0;
+  document.getElementById('dSlMkt').value=0;
+  document.getElementById('dSlPrc').value=0;
+  document.getElementById('dSlCst').value=0;
+  document.getElementById('dSlB2B').value=0;
+  calcD();
+}
+
+// Optimize with business constraints by phase and demand
+function getConstraints(dr,ratRaw){
+  // Phase constraints: what's realistically movable at this point
+  var fase;
+  if(dr>60)fase=0;else if(dr>40)fase=1;else if(dr>20)fase=2;else if(dr>10)fase=3;else fase=4;
+  // Demand: raw ratio without palancas
+  var demanda=ratRaw>=0.85?'strong':ratRaw>=0.6?'healthy':ratRaw>=0.3?'slow':'dead';
+
+  // Base ranges by phase (how much can you actually move each lever)
+  var C={
+    // [minCst, maxCst, minMkt, maxMkt, minPrc, maxPrc, minB2B, maxB2B]
+    0:[-25,0, 0,50, -15,15, 0,20],   // launch: everything open
+    1:[-20,0, 0,40, -10,15, 0,20],   // validation
+    2:[-15,0, 0,30, -10,10, 0,25],   // construction
+    3:[-10,0, 0,20, -5,5,   0,25],   // critical: costs mostly committed, price risky
+    4:[-5,0,  0,10, -10,0,  0,30]    // execution: costs locked, no price increase, max B2B
+  }[fase];
+
+  // Demand overrides
+  if(demanda==='dead'||demanda==='slow'){
+    // Never raise price when demand is weak — you're pushing buyers away
+    C[5]=Math.min(C[5],0); // maxPrc = 0
+    // Push B2B harder
+    C[7]=30;
+    // Marketing: less effective when demand is structural
+    C[3]=Math.min(C[3],20);
+  }
+  if(demanda==='strong'){
+    // Can raise price
+    C[4]=0; C[5]=15; // only up
+    // B2B unnecessary
+    C[7]=5;
+  }
+  return{cst:[C[0],C[1]],mkt:[C[2],C[3]],prc:[C[4],C[5]],b2b:[C[6],C[7]],fase:fase,demanda:demanda};
+}
+
+// Sequential optimizer: close the gap with the cheapest palanca first, stop when gap closes
+// Priority: 1) B2B (easiest, no relationship cost) 2) Price adjustment 3) Marketing 4) Costs (last resort)
+function seqOptim(tc,pr,af,ve,dv,dr,mktBaseCost,ivaP,comP,L){
+  var best={mkt:0,prc:0,cst:0,b2b:0};
+
+  function eval(m,p,c,b){
+    var mktE=mktBaseCost*(m/100), costCh=tc*(c/100);
+    var tca=tc+mktE+costCh;
+    var pa=pr*(1+p/100), tna=pa*(1-ivaP/100)*(1-comP/100);
+    var bea=tna>0?Math.ceil(tca/tna):99999;
+    var vra=dv>0?ve/dv:0;
+    var va2=vra*(1+(m/100)*0.5);
+    var pja=Math.min(af,Math.round(ve+va2*dr));
+    var b2ea=Math.round((af-ve)*(b/100));
+    var b2ia=b2ea*pa*(1-20/100)*(1-ivaP/100)*(1-comP/100);
+    var pjfa=Math.min(af,pja+b2ea);
+    var inga=Math.round(pjfa*tna)+b2ia;
+    return{res:inga-tca,pjF:pjfa,be:bea,tca:tca};
+  }
+
+  // Step 0: baseline
+  var base=eval(0,0,0,0);
+  if(base.res>=0&&base.pjF>=base.be) return best; // already profitable, don't touch
+
+  // Step 1: B2B — try increasing until gap closes or limit
+  for(var b=2;b<=L.b2b[1];b+=2){
+    var r=eval(0,0,0,b);
+    best.b2b=b;
+    if(r.res>=0&&r.pjF>=r.be) return best;
+  }
+
+  // Step 2: Price — try adjusting (down if slow demand, up if strong)
+  for(var p=L.prc[0];p<=L.prc[1];p+=1){
+    if(p===0) continue;
+    var r=eval(0,p,0,best.b2b);
+    if(r.res>eval(0,best.prc,0,best.b2b).res) best.prc=p;
+    if(r.res>=0&&r.pjF>=r.be) return best;
+  }
+
+  // Step 3: Marketing — try increasing
+  for(var m=5;m<=L.mkt[1];m+=5){
+    var r=eval(m,best.prc,0,best.b2b);
+    if(r.res>eval(best.mkt,best.prc,0,best.b2b).res) best.mkt=m;
+    if(r.res>=0&&r.pjF>=r.be) return best;
+  }
+
+  // Step 4: Cost cuts — last resort, only if still negative
+  var cur=eval(best.mkt,best.prc,0,best.b2b);
+  if(cur.res<0){
+    for(var c=L.cst[0];c<0;c+=1){
+      var r=eval(best.mkt,best.prc,c,best.b2b);
+      if(r.res>eval(best.mkt,best.prc,best.cst,best.b2b).res) best.cst=c;
+      if(r.res>=0) return best;
+    }
+  }
+
+  return best;
+}
+
+function optimQ(){
+  var af=Math.max(0,Number(document.getElementById('qa').value)||0);
+  var ve=Math.min(af,Math.max(0,Number(document.getElementById('qv').value)||0));
+  var dr=Math.max(0,Number(document.getElementById('qd').value)||0);
+  var pr=Math.max(0,Number(document.getElementById('qp').value)||0);
+  var dv=Math.max(1,Number(document.getElementById('qdv').value)||65);
+  var tc0=Number(document.getElementById('qc').value)||0;
+  if(!af||!pr||!tc0||dr<=0)return;
+  var tn0=pr*0.828,be0Raw=tn0>0?Math.ceil(tc0/tn0):99999;
+  var vrRaw=dv>0?ve/dv:0,restRaw=Math.max(0,be0Raw-ve),vnRaw=dr>0?restRaw/dr:99999;
+  var ratRaw=vnRaw>0&&isFinite(vnRaw)?vrRaw/vnRaw:vrRaw>0?2:0;
+  var L=getConstraints(dr,ratRaw);
+  var best=seqOptim(tc0,pr,af,ve,dv,dr,tc0*0.07,10,8,L);
+  Q.mkt=best.mkt;Q.prc=best.prc;Q.cst=best.cst;Q.b2b=best.b2b;
+  document.getElementById('qSlMkt').value=best.mkt;
+  document.getElementById('qSlPrc').value=best.prc;
+  document.getElementById('qSlCst').value=best.cst;
+  document.getElementById('qSlB2B').value=best.b2b;
+  calcQ();
+}
+
+function optimD(){
+  var tc=D.cache+D.produccion+D.venue+D.seguridad+D.sgae+D.marketing+D.seguros+D.otros;
+  var tp=DT.reduce(function(s,t){return s+t.a},0)||100;
+  var apBase=DT.reduce(function(s,t){return s+t.p*(t.a/tp)},0);
+  var ve=Math.min(D.vendidas,D.aforo);
+  if(!D.aforo||!tc||D.diasRestantes<=0)return;
+  var tn0=apBase*(1-D.iva/100)*(1-D.comision/100);
+  var be0Raw=tn0>0?Math.ceil(tc/tn0):99999;
+  var vrRaw=D.diasVenta>0?ve/D.diasVenta:0,restRaw=Math.max(0,be0Raw-ve),vnRaw=D.diasRestantes>0?restRaw/D.diasRestantes:99999;
+  var ratRaw=vnRaw>0&&isFinite(vnRaw)?vrRaw/vnRaw:vrRaw>0?2:0;
+  var L=getConstraints(D.diasRestantes,ratRaw);
+  var best=seqOptim(tc,apBase,D.aforo,ve,D.diasVenta,D.diasRestantes,D.marketing,D.iva,D.comision,L);
+  D.palMkt=best.mkt;D.palPrc=best.prc;D.palCst=best.cst;D.palB2B=best.b2b;
+  document.getElementById('dSlMkt').value=best.mkt;
+  document.getElementById('dSlPrc').value=best.prc;
+  document.getElementById('dSlCst').value=best.cst;
+  document.getElementById('dSlB2B').value=best.b2b;
+  calcD();
+}
+
+// ══════ INIT ══════
+// Sliders are native <input type="range"> with oninput in HTML — no init needed
+calcQ('b');
+initD();calcD();
+// Inject info icons into palanca titles
+var palTips={qImpMkt:'mkt',qImpPrc:'prc',qImpCst:'cst',qImpB2B:'b2b',dImpMkt:'mkt',dImpPrc:'prc',dImpCst:'cst',dImpB2B:'b2b'};
+Object.keys(palTips).forEach(function(id){
+  var el=document.getElementById(id);
+  if(el){var t=el.parentElement.querySelector('.pal-t');if(t)t.innerHTML+=I(palTips[id])}
+});
+</script>
+</body>
+</html>
